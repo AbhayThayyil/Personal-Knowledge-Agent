@@ -1,12 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth
+from app.api.routes import auth, collections, documents
 from app.core.config import settings
-from app.core.database import Base, engine
-from app.models import user  # noqa: F401 - ensures model is registered before create_all
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 
@@ -19,6 +15,8 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(collections.router)
+app.include_router(documents.router)
 
 
 @app.get("/health")
