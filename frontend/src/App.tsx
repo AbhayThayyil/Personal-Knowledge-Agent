@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import CollectionPage from './pages/CollectionPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -14,6 +15,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collections/:id"
+        element={
+          <ProtectedRoute>
+            <CollectionPage />
           </ProtectedRoute>
         }
       />
