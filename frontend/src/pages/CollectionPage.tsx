@@ -59,6 +59,12 @@ export default function CollectionPage() {
         <Link to="/" className="text-sm text-gray-500 hover:underline">
           ← Collections
         </Link>
+        <Link
+          to={`/collections/${collectionId}/chat`}
+          className="text-sm text-gray-900 underline"
+        >
+          Chat with this collection
+        </Link>
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
