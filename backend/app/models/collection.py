@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
+    from app.models.chat import Chat
     from app.models.document import Document
 
 
@@ -24,3 +25,4 @@ class Collection(Base):
     documents: Mapped[list["Document"]] = relationship(
         back_populates="collection", cascade="all, delete-orphan"
     )
+    chats: Mapped[list["Chat"]] = relationship(cascade="all, delete-orphan")
