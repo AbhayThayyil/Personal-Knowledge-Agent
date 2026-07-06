@@ -8,14 +8,18 @@ export interface Citation {
 
 interface StreamChatOptions {
   collectionId: number
+  chatId: number | null
   message: string
+  onStart: (chatId: number) => void
   onToken: (content: string) => void
   onDone: (citations: Citation[]) => void
 }
 
 export async function streamChat({
   collectionId,
+  chatId,
   message,
+  onStart,
   onToken,
   onDone,
 }: StreamChatOptions): Promise<void> {
@@ -27,7 +31,7 @@ export async function streamChat({
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ collection_id: collectionId, message }),
+    body: JSON.stringify({ collection_id: collectionId, chat_id: chatId, message }),
   })
 
   if (!res.ok || !res.body) {
@@ -54,7 +58,9 @@ export async function streamChat({
       if (!line.startsWith('data: ')) continue
       const payload = JSON.parse(line.slice('data: '.length))
 
-      if (payload.type === 'token') {
+      if (payload.type === 'start') {
+        onStart(payload.chat_id)
+      } else if (payload.type === 'token') {
         onToken(payload.content)
       } else if (payload.type === 'done') {
         onDone(payload.citations)
