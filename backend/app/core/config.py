@@ -12,5 +12,11 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 50
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    ollama_base_url: str = "http://localhost:11434"
+    embedding_model: str = "nomic-embed-text"
+    chroma_dir: str = "./chroma"
+    chunk_size: int = 500
+    chunk_overlap: int = 50
+
 
 settings = Settings()

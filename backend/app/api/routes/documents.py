@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -7,7 +7,8 @@ from app.core.database import get_db
 from app.models.document import Document
 from app.models.user import User
 from app.schemas.document import DocumentOut
-from app.services import storage
+from app.services import storage, vectorstore
+from app.services.pipeline import process_document
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 async def upload_document(
     collection_id: int,
     file: UploadFile,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Document:
@@ -33,6 +35,9 @@ async def upload_document(
     db.add(document)
     db.commit()
     db.refresh(document)
+
+    background_tasks.add_task(process_document, document.id)
+
     return document
 
 
@@ -60,5 +65,6 @@ def delete_document(
     get_owned_collection(document.collection_id, db, current_user)
 
     storage.delete_file(document.file_path)
+    vectorstore.delete_document_chunks(document.id)
     db.delete(document)
     db.commit()

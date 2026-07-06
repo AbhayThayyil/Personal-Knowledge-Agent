@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.models.collection import Collection
 from app.models.user import User
 from app.schemas.collection import CollectionCreate, CollectionOut, CollectionUpdate
-from app.services import storage
+from app.services import storage, vectorstore
 
 router = APIRouter(prefix="/collections", tags=["collections"])
 
@@ -85,5 +85,6 @@ def delete_collection(
     collection = get_owned_collection(collection_id, db, current_user)
     for document in collection.documents:
         storage.delete_file(document.file_path)
+        vectorstore.delete_document_chunks(document.id)
     db.delete(collection)
     db.commit()

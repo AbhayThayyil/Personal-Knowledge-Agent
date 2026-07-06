@@ -23,6 +23,12 @@ export default function CollectionPage() {
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents', collectionId],
     queryFn: () => listDocuments(collectionId),
+    refetchInterval: (query) => {
+      const stillProcessing = query.state.data?.some(
+        (doc) => doc.status === 'uploaded' || doc.status === 'processing',
+      )
+      return stillProcessing ? 1500 : false
+    },
   })
 
   const uploadMutation = useMutation({
