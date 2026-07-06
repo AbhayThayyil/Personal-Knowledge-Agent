@@ -14,9 +14,11 @@ class Settings(BaseSettings):
 
     ollama_base_url: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
+    chat_model: str = "qwen3:8b"
     chroma_dir: str = "./chroma"
     chunk_size: int = 500
     chunk_overlap: int = 50
+    chat_top_k: int = 5
 
 
 settings = Settings()
