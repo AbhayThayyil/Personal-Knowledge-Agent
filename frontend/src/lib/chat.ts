@@ -6,11 +6,17 @@ export interface Citation {
   page: number
 }
 
+export interface ToolCall {
+  name: string
+  arguments: Record<string, unknown>
+}
+
 interface StreamChatOptions {
   collectionId: number
   chatId: number | null
   message: string
   onStart: (chatId: number) => void
+  onToolCall: (toolCall: ToolCall) => void
   onToken: (content: string) => void
   onDone: (citations: Citation[]) => void
 }
@@ -20,6 +26,7 @@ export async function streamChat({
   chatId,
   message,
   onStart,
+  onToolCall,
   onToken,
   onDone,
 }: StreamChatOptions): Promise<void> {
@@ -60,6 +67,8 @@ export async function streamChat({
 
       if (payload.type === 'start') {
         onStart(payload.chat_id)
+      } else if (payload.type === 'tool_call') {
+        onToolCall({ name: payload.name, arguments: payload.arguments })
       } else if (payload.type === 'token') {
         onToken(payload.content)
       } else if (payload.type === 'done') {
