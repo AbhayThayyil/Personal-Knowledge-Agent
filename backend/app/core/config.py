@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     chunk_overlap: int = 50
     chat_top_k: int = 5
+    agent_temperature: float = 0.0
+    agent_max_tool_rounds: int = 5
 
 
 settings = Settings()

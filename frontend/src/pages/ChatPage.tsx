@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../lib/api'
 import { streamChat } from '../lib/chat'
-import type { Citation } from '../lib/chat'
+import type { Citation, ToolCall } from '../lib/chat'
 import {
   deleteChat,
   getChat,
@@ -17,6 +17,24 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   citations?: Citation[]
+  toolCalls?: ToolCall[]
+}
+
+function describeToolCall(toolCall: ToolCall): string {
+  switch (toolCall.name) {
+    case 'search_documents':
+      return `Searching documents for "${toolCall.arguments.query}"`
+    case 'retrieve_document':
+      return `Reading "${toolCall.arguments.filename}"`
+    case 'list_collection_documents':
+      return 'Listing documents in this collection'
+    case 'search_by_filename':
+      return `Searching filenames for "${toolCall.arguments.filename_contains}"`
+    case 'get_conversation_history':
+      return 'Checking earlier conversation'
+    default:
+      return toolCall.name
+  }
 }
 
 export default function ChatPage() {
@@ -95,6 +113,17 @@ export default function ChatPage() {
           if (isNewChat) {
             queryClient.invalidateQueries({ queryKey: ['chats', collectionId] })
           }
+        },
+        onToolCall: (toolCall) => {
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            updated[updated.length - 1] = {
+              ...last,
+              toolCalls: [...(last.toolCalls ?? []), toolCall],
+            }
+            return updated
+          })
         },
         onToken: (content) => {
           setMessages((prev) => {
@@ -182,6 +211,19 @@ export default function ChatPage() {
           )}
           {messages.map((message, i) => (
             <div key={i} className={message.role === 'user' ? 'text-right' : ''}>
+              {message.toolCalls && message.toolCalls.length > 0 && (
+                <div className="mb-2 space-y-1">
+                  {message.toolCalls.map((toolCall, j) => (
+                    <div
+                      key={j}
+                      className="text-xs text-gray-500 flex items-center gap-1.5"
+                    >
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      {describeToolCall(toolCall)}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div
                 className={
                   message.role === 'user'

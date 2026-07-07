@@ -52,6 +52,20 @@ def delete_document_chunks(document_id: int) -> None:
     get_collection().delete(where={"document_id": document_id})
 
 
+def get_chunks_for_document(document_id: int) -> list[SearchResult]:
+    results = get_collection().get(
+        where={"document_id": document_id}, include=["documents", "metadatas"]
+    )
+    paired = sorted(
+        zip(results["documents"], results["metadatas"]),
+        key=lambda pair: pair[1]["chunk_index"],
+    )
+    return [
+        SearchResult(text=text, filename=meta["filename"], page=meta["page"], document_id=meta["document_id"])
+        for text, meta in paired
+    ]
+
+
 def search(collection_id: int, query_embedding: list[float], top_k: int) -> list[SearchResult]:
     results = get_collection().query(
         query_embeddings=[query_embedding],
