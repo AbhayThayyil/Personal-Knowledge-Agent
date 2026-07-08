@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     chat_top_k: int = 5
     agent_temperature: float = 0.0
     agent_max_tool_rounds: int = 5
+    memory_window: int = 10
 
 
 settings = Settings()

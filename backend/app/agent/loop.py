@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 import httpx
 from sqlalchemy.orm import Session
 
+from app.agent.memory import get_recent_messages
 from app.agent.tools import TOOL_SCHEMAS, call_tool
 from app.core.config import settings
 
@@ -14,20 +15,22 @@ AGENT_SYSTEM_PROMPT = (
     "the user's documents, even if you already believe you know the answer "
     "from general knowledge -- the user wants the answer grounded in THEIR "
     "specific documents, not your training data. Only skip tools for pure "
-    "greetings ('hi', 'thanks') with no informational content. If the question "
-    "refers back to earlier conversation instead of the documents, call "
-    "get_conversation_history instead of search_documents. Cite sources as "
-    "(filename, page) using only filenames and pages returned by a tool -- "
-    "never invent one."
+    "greetings ('hi', 'thanks') with no informational content. Recent turns "
+    "of this conversation are already included below, so resolve references "
+    "like 'it' or 'that' using them directly -- only call "
+    "get_conversation_history if the user refers to something older than "
+    "what's shown. Cite sources as (filename, page) using only filenames and "
+    "pages returned by a tool -- never invent one."
 )
 
 async def run_agent(
     db: Session, collection_id: int, chat_id: int, question: str
 ) -> AsyncIterator[dict]:
-    messages: list[dict] = [
-        {"role": "system", "content": AGENT_SYSTEM_PROMPT},
-        {"role": "user", "content": question},
-    ]
+    history = get_recent_messages(db, chat_id, limit=settings.memory_window)
+
+    messages: list[dict] = [{"role": "system", "content": AGENT_SYSTEM_PROMPT}]
+    messages += [{"role": m.role, "content": m.content} for m in history]
+    messages.append({"role": "user", "content": question})
 
     citations: list[dict] = []
     seen_citations: set[tuple[str, int]] = set()

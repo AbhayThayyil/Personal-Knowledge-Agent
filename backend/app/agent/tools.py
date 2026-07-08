@@ -3,9 +3,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.agent.memory import get_recent_messages
 from app.core.config import settings
 from app.models.document import Document
-from app.models.message import Message
 from app.services.embeddings import embed_text
 from app.services.vectorstore import get_chunks_for_document, search
 
@@ -73,11 +73,11 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "get_conversation_history",
             "description": (
-                "Get the prior turns of this conversation. Call this whenever the "
-                "user's message refers back to earlier conversation rather than "
-                "the documents themselves -- e.g. it uses words like 'that', "
-                "'it', 'the one I mentioned', 'what did I just ask', or 'earlier' "
-                "without naming a specific document or topic."
+                "Get the FULL history of this conversation, including turns older "
+                "than what's already shown to you above. The most recent turns are "
+                "already included in this conversation automatically -- only call "
+                "this if the user refers to something further back than what you "
+                "can already see."
             ),
             "parameters": {"type": "object", "properties": {}},
         },
@@ -138,10 +138,8 @@ def search_by_filename(db: Session, collection_id: int, chat_id: int, filename_c
 
 
 def get_conversation_history(db: Session, collection_id: int, chat_id: int) -> dict[str, Any]:
-    messages = db.query(Message).filter(Message.chat_id == chat_id).order_by(Message.created_at).all()
-    # The current in-flight question was already saved before the agent loop runs, so drop it.
-    prior = messages[:-1]
-    return {"history": [{"role": m.role, "content": m.content} for m in prior]}
+    messages = get_recent_messages(db, chat_id)
+    return {"history": [{"role": m.role, "content": m.content} for m in messages]}
 
 
 TOOL_FUNCTIONS = {
