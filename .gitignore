@@ -15,5 +15,8 @@ frontend/.vite/
 # Docs (personal learning notes, not shipped project docs)
 docs/
 
+# Docker
+.env
+
 # OS
 .DS_Store

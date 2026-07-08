@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pka
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pka}
+      POSTGRES_DB: pka
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pka"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://pka:${POSTGRES_PASSWORD:-pka}@postgres:5432/pka
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE_MB: "50"
+      CORS_ORIGINS: '["http://localhost:8080"]'
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      EMBEDDING_MODEL: nomic-embed-text
+      CHAT_MODEL: qwen3:8b
+      CHROMA_DIR: /app/chroma
+      CHUNK_SIZE: "500"
+      CHUNK_OVERLAP: "50"
+      CHAT_TOP_K: "5"
+      AGENT_TEMPERATURE: "0.0"
+      AGENT_MAX_TOOL_ROUNDS: "5"
+      MEMORY_WINDOW: "10"
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_chroma:/app/chroma
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_uploads:
+  backend_chroma:
