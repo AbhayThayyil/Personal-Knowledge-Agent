@@ -1,0 +1,22 @@
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.db
+backend/uploads/
+backend/chroma/
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Docs (personal learning notes, not shipped project docs)
+docs/
+
+# Docker
+.env
+
+# OS
+.DS_Store
